@@ -97,7 +97,7 @@ int main(int argc, char** argv) {
   options.shutdownOn = {SIGINT, SIGTERM};
   options.enableContentCompression = false;
   options.handlerFactories = RequestHandlerChain()
-                 .addThen<LibLogCabinHandlerFactory>()
+                 .addThen<LibLogCabinRequestHandlerFactory>()
                  .build();
 
   HTTPServer server(std::move(options));
