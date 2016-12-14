@@ -1,1 +1,2 @@
-g++ -std=c++11 -o raft-example-server Server.cpp -I/usr/local/include -lproxygenhttpserver -lfolly -lglog -pthread -lliblogcabin
+all:
+	g++ -std=c++14 -fno-strict-overflow -fPIC -Wall -Wextra -Wcast-align -Wcast-qual -Wconversion -Weffc++ -Wformat=2 -Wmissing-format-attribute -Wno-non-template-friend -Wno-unused-parameter -Woverloaded-virtual -Wwrite-strings -DSWIG -g -DDEBUG -I/usr/local/include -o raft-example-server Server.cpp -lproxygenhttpserver -lproxygencurl -lproxygenlib -lliblogcabin -lfolly -lglog -pthread -lprotobuf -lcryptopp
