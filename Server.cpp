@@ -172,7 +172,7 @@ public:
 class LibLogCabinRequestHandlerFactory : public RequestHandlerFactory {
 public:
   LibLogCabinRequestHandlerFactory(
-    const std::shared_ptr<Raft::RaftConsensus>& raft)				  
+    const std::shared_ptr<Raft::RaftConsensus>& raft)
     : raft(raft)
   {
   }
@@ -189,9 +189,6 @@ public:
 
  private:
   std::shared_ptr<Raft::RaftConsensus> raft;
-  int serverId;
-  std::string listenAddress;
-  std::string leaderAddress;
 };
 
 void initRaft(
@@ -273,7 +270,7 @@ int main(int argc, char** argv) {
 
   std::shared_ptr<Raft::RaftConsensus> raft(new Raft::RaftConsensus(config, serverId));
   initRaft(leaderAddress, listenAddress, serverId, raft);
-  
+
   HTTPServerOptions options;
   options.threads = static_cast<size_t>(sysconf(_SC_NPROCESSORS_ONLN));
   options.idleTimeout = std::chrono::milliseconds(60000);
