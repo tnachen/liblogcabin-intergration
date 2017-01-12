@@ -172,18 +172,34 @@ public:
 class LibLogCabinRequestHandlerFactory : public RequestHandlerFactory {
 public:
   LibLogCabinRequestHandlerFactory(
-      Core::Config& config,
-      uint64_t serverId,
-      const std::string& listenAddress,
-      const std::string& leaderAddress)
-    : raft(new Raft::RaftConsensus(config, serverId)),
-      serverId(serverId),
-      listenAddress(listenAddress),
-      leaderAddress(leaderAddress)
+    const std::shared_ptr<Raft::RaftConsensus>& raft)				  
+    : raft(raft)
   {
   }
 
   void onServerStart(folly::EventBase* evb) noexcept override {
+  }
+
+  void onServerStop() noexcept override {
+  }
+
+  RequestHandler* onRequest(RequestHandler*, HTTPMessage*) noexcept override {
+    return new LibLogCabinHandler(raft);
+  }
+
+ private:
+  std::shared_ptr<Raft::RaftConsensus> raft;
+  int serverId;
+  std::string listenAddress;
+  std::string leaderAddress;
+};
+
+void initRaft(
+    const std::string& leaderAddress,
+    const std::string& listenAddress,
+    int serverId,
+    const std::shared_ptr<Raft::RaftConsensus>& raft)
+{
     raft->init();
 
     if (leaderAddress != "") {
@@ -230,21 +246,8 @@ public:
         usleep(1000);
       }
     }
-  }
+}
 
-  void onServerStop() noexcept override {
-  }
-
-  RequestHandler* onRequest(RequestHandler*, HTTPMessage*) noexcept override {
-    return new LibLogCabinHandler(raft);
-  }
-
- private:
-  std::shared_ptr<Raft::RaftConsensus> raft;
-  int serverId;
-  std::string listenAddress;
-  std::string leaderAddress;
-};
 
 int main(int argc, char** argv) {
   if (argc < 4) {
@@ -268,15 +271,17 @@ int main(int argc, char** argv) {
   Core::Config config;
   config.set("listenAddresses", listenAddress);
 
+  std::shared_ptr<Raft::RaftConsensus> raft(new Raft::RaftConsensus(config, serverId));
+  initRaft(leaderAddress, listenAddress, serverId, raft);
+  
   HTTPServerOptions options;
   options.threads = static_cast<size_t>(sysconf(_SC_NPROCESSORS_ONLN));
   options.idleTimeout = std::chrono::milliseconds(60000);
   options.shutdownOn = {SIGINT, SIGTERM};
   options.enableContentCompression = false;
   options.handlerFactories = RequestHandlerChain()
-                             .addThen<LibLogCabinRequestHandlerFactory>(
-                                 config, serverId, listenAddress, leaderAddress)
-                             .build();
+    .addThen<LibLogCabinRequestHandlerFactory>(raft)
+    .build();
 
   HTTPServer server(std::move(options));
   server.bind(IPs);
