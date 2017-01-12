@@ -1,5 +1,7 @@
 #!/bin/bash
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 REGION=$(aws configure list 2> /dev/null | grep region | awk '{ print $2 }')
 if [ -z "$REGION" ]; then
     echo "error: Region not set, please make sure to run 'aws configure'"
@@ -74,8 +76,8 @@ echo "done"
 
 # IAM role
 echo -n "Creating IAM role (liblogcabin-ecs-role) .. "
-aws iam create-role --role-name liblogcabin-ecs-role --assume-role-policy-document file://data/liblogcabin-ecs-role.json > /dev/null
-aws iam put-role-policy --role-name liblogcabin-ecs-role --policy-name liblogcabin-ecs-policy --policy-document file://data/liblogcabin-ecs-policy.json
+aws iam create-role --role-name liblogcabin-ecs-role --assume-role-policy-document file://$DIR/data/liblogcabin-ecs-role.json > /dev/null
+aws iam put-role-policy --role-name liblogcabin-ecs-role --policy-name liblogcabin-ecs-policy --policy-document file://$DIR/data/liblogcabin-ecs-policy.json
 aws iam create-instance-profile --instance-profile-name liblogcabin-ecs-instance-profile > /dev/null
 # Wait for the instance profile to be ready, otherwise we get an error when trying to use it
 while ! aws iam get-instance-profile --instance-profile-name liblogcabin-ecs-instance-profile  2>&1 > /dev/null; do
@@ -92,7 +94,7 @@ sleep 15
 
 TMP_USER_DATA_FILE=$(mktemp /tmp/liblogcabin-ecs-demo-user-data-XXXX)
 trap 'rm $TMP_USER_DATA_FILE' EXIT
-cp data/set-ecs-cluster-name.sh $TMP_USER_DATA_FILE
+cp $DIR/data/set-ecs-cluster-name.sh $TMP_USER_DATA_FILE
 aws autoscaling create-launch-configuration --image-id $AMI --launch-configuration-name liblogcabin-ecs-launch-configuration --key-name liblogcabin-ecs-demo-key --security-groups $SECURITY_GROUP_ID --instance-type t2.medium --user-data file://$TMP_USER_DATA_FILE  --iam-instance-profile liblogcabin-ecs-instance-profile --associate-public-ip-address --instance-monitoring Enabled=false
 echo "done"
 

@@ -203,16 +203,11 @@ void initRaft(
       folly::EventBase innerevb;
       HTTPHeaders headers;
       URL url(leaderAddress + "/join");
-      folly::StringPiece data(std::to_string(serverId) + std::string(",") + listenAddress);
-      std::string path = "/tmp/raft-example-server-" + std::to_string(::getpid() + rand());
-      if (!folly::writeFile(data, path.c_str())) {
-        std::cerr << "Unable to write to temp file" << std::endl;
-        exit(1);
-      }
+      std::string data(std::to_string(serverId) + std::string(",") + listenAddress);
 
-          // Join the leader
+      // Join the leader
       CurlService::CurlClient curl(
-          &innerevb, HTTPMethod::POST, url, headers, path);
+          &innerevb, url, headers, data);
       curl.setFlowControlSettings(64 * 1024);
       curl.setLogging(true);
 

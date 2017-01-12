@@ -5,12 +5,13 @@ import boto3
 import json
 import sys
 import subprocess
+import os
 
 parser = argparse.ArgumentParser(description='Launch raft-example-servers in AWS.')
 parser.add_argument('count', help="Number of servers to launch", type=int)
 args = parser.parse_args()
 
-with open('data/task-template.json', 'r') as task_template_file:
+with open(os.path.dirname(os.path.abspath(__file__)) + '/data/task-template.json', 'r') as task_template_file:
     task_template=task_template_file.read().replace('\n', '')
 
 base_http_port = 12301
@@ -41,10 +42,17 @@ if len(container_instances) != args.count:
 ec2_client = boto3.client('ec2')
 response = ec2_client.describe_instances(
     InstanceIds=ec2Ids)
-instance_details = []
+details = []
 for reservation in response['Reservations']:
     for instance in reservation['Instances']:
-        instance_details.append(instance)
+        details.append(instance)
+
+instance_details = []
+for container_instance in container_instances:
+    for detail in details:
+        if detail['InstanceId'] == container_instance['ec2InstanceId']:
+            instance_details.append(detail)
+            break
 
 leader_address = ""
 for i in range(args.count):
@@ -54,7 +62,7 @@ for i in range(args.count):
     task_def = task_template \
         .replace("$ID", str(i)) \
         .replace("$HTTP_PORT", str(base_http_port + i)) \
-        .replace("$RAFT_PORT", str(base_raft_port + i)) \
+        .replace("$RAFT_ADDRESS", instance_details[i]['PrivateIpAddress'] + ":" + str(base_raft_port + i)) \
         .replace("$LEADER_ADDRESS", leader_address)
 
     response = client.register_task_definition(

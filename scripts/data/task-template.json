@@ -8,7 +8,7 @@
             "cpu": 2048,
             "memory": 2048,
             "name": "raft-example-server",
-            "command": ["./raft-example-server", "$ID", "$HTTP_PORT", "0.0.0.0:$RAFT_PORT", "$LEADER_ADDRESS"],
+            "command": ["./raft-example-server", "$ID", "$HTTP_PORT", "$RAFT_ADDRESS", "$LEADER_ADDRESS"],
             "ulimits": [
                 {
                     "softLimit": 12000,
