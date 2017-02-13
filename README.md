@@ -14,3 +14,7 @@ To deploy a 3 node cluster (1 leader, 2 followers)
 == Cleanup cluster
 
 ./scripts/cleanup.sh 3
+
+== Docker image ==
+
+You can also modify Server.cpp and build your own Docker image, simply modify scripts/data/task-template.json and replace the image name with your own.
